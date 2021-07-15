@@ -1,0 +1,11 @@
+Package: BlanketStatsments
+Title: Build and compare statistical models
+Version: 0.1.0
+Author: J. Peter Marquardt <peter@kmarquardt.de> [aut, cre]
+Maintainer: J. Peter Marquardt <peter@kmarquardt.de>
+Description: Build and compare nested statistical models with sets of equal and different independent variables.
+Depends: R (>= 4.0.0)
+Imports: basecamb, survival, survAUC, DescTools, Hmisc, stats, utils
+License: GPL-3
+Encoding: UTF-8
+RoxygenNote: 7.1.1
