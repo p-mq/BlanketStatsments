@@ -34,6 +34,10 @@ A regression model of linear or logistic type
 Build a generic regression model from data and meta-parameters.
 Currently only available for linear and logistic types.
 }
+\examples{
+build_reg_model(data.frame('outcome' = c(1,2), 'pred' = c(3,4)), 'outcome', c('pred'))
+
+}
 \author{
 J. Peter Marquardt
 }

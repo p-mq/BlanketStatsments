@@ -17,7 +17,7 @@
 #' @return A Cox proportional hazards model
 #'
 #' @importFrom basecamb build_model_formula
-#' @importFrom survival coxph
+#' @importFrom survival coxph Surv
 #' @export
 #'
 #' @author J. Peter Marquardt
@@ -51,6 +51,9 @@ build_cox_model <- function(df, event_time, event_censor, predictors, covariates
 #' @param verbose logical. TRUE activates printout messages
 #'
 #' @return A regression model of linear or logistic type
+#'
+#' @examples
+#' build_reg_model(data.frame('outcome' = c(1,2), 'pred' = c(3,4)), 'outcome', c('pred'))
 #'
 #' @importFrom basecamb build_model_formula
 #' @importFrom stats lm glm
