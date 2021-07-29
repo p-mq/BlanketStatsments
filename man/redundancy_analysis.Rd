@@ -4,10 +4,12 @@
 \alias{redundancy_analysis}
 \title{Redundancy analysis}
 \usage{
-redundancy_analysis(model, r2_threshold = 0.9, nk = 0)
+redundancy_analysis(model, data, r2_threshold = 0.9, nk = 0)
 }
 \arguments{
 \item{model}{a statistical regression model of class linear, logistic or coxph}
+
+\item{data}{data.frame used to create the model}
 
 \item{r2_threshold}{float threshold value to consider a parameter redundant}
 
@@ -18,6 +20,12 @@ an object of class "redun"
 }
 \description{
 Perform a redundancy analysis on an existing model
+}
+\examples{
+data <- survival::lung
+mod <- build_reg_model(data, 'age', c('sex'))
+redundancy_analysis(mod, data)
+
 }
 \author{
 J. Peter Marquardt

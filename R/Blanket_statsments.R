@@ -1,5 +1,5 @@
 # Wrapper methods to build common models quickly with a set of static covariables
-# J. Peter Marquardt, 2021-07-15
+# J. Peter Marquardt, 2021-07-27
 
 
 #' Build a cox model
@@ -16,9 +16,12 @@
 #'
 #' @return A Cox proportional hazards model
 #'
-#' @importFrom basecamb build_model_formula
-#' @importFrom survival coxph Surv
+#' @importFrom survival Surv coxph
 #' @export
+#'
+#' @examples
+#' data <- survival::lung
+#' mod <- build_cox_model(data, 'time', 'status', c('age', 'sex'))
 #'
 #' @author J. Peter Marquardt
 build_cox_model <- function(df, event_time, event_censor, predictors, covariates=c(), verbose = FALSE){
@@ -26,8 +29,7 @@ build_cox_model <- function(df, event_time, event_censor, predictors, covariates
   variables <- append(covariates, predictors) # merging all independent variables into one vector
 
   # building the actual formula
-  cox_form <- basecamb::build_model_formula(outcome = event_time, predictors = variables, censor_event = event_censor)
-
+  cox_form <- .build_model_formula(outcome = event_time, predictors = variables, censor_event = event_censor)
   cox_model <- survival::coxph(formula = cox_form, data = df)
 
   if (verbose){print(table_predictors(df, cox_model, predictors))}
@@ -53,7 +55,7 @@ build_cox_model <- function(df, event_time, event_censor, predictors, covariates
 #' @return A regression model of linear or logistic type
 #'
 #' @examples
-#' build_reg_model(data.frame('outcome' = c(1,2), 'pred' = c(3,4)), 'outcome', c('pred'))
+#' mod <- build_reg_model(data.frame('outcome' = c(1,2), 'pred' = c(3,4)), 'outcome', c('pred'))
 #'
 #' @importFrom basecamb build_model_formula
 #' @importFrom stats lm glm
@@ -97,6 +99,11 @@ build_reg_model <- function(df, outcome, predictors, covariates=c(), modality='l
 #'
 #' @return double AUC value for the evaluated model on the specified data set.
 #'
+#' @examples
+#' data <- survival::lung
+#' cancer_mod <- survival::coxph(survival::Surv(time, status)~age, data = data)
+#' calculate_Uno_c(data, cancer_mod)
+#'
 #' @importFrom survAUC UnoC
 #' @importFrom survival Surv
 #' @importFrom stats predict
@@ -110,15 +117,13 @@ calculate_Uno_c <- function(df, model, verbose = FALSE){
   df_no_na <- df
   for (coln in pred_vars){df_no_na <- df_no_na[!is.na(df_no_na[coln]),]}
 
-
   # extracting Survival model and predictor variables used in the model training
   Surv_model_old <- model$y
 
   # building Surv() model for the test dataframe
   form_string <- paste(deparse(model$formula), collapse = '')  # extracting formula as string
-  surv_string <- strsplit(form_string, ')')[[1]][1]  # Extracting the Surv() part of it
-  surv_params <- strsplit(substr(surv_string, 6, nchar(surv_string)), ', ')  # extracting everything inside the Surv()
-
+  surv_string <- strsplit(strsplit(form_string, 'Surv(', fixed=TRUE)[[1]][[2]], ')')[[1]][1] # Extracting insides of the Surv() part of it
+  surv_params <- strsplit(gsub(" ", "", surv_string, fixed = TRUE), ',')  # extracting the parameters
   surv_time <- surv_params[[1]][1]  # assigning time variable name
   surv_cens <- surv_params[[1]][2]  # assigning cens variable name
 
@@ -188,12 +193,16 @@ blanket_c_statistic <- function(df, model_list, modality = 'logistic', verbose =
 #'
 #' Extract coefficients and p-values only for regression models and table them
 #'
-#'
 #' @param df data.frame containing the data set. If evaluating independently, use the test set.
 #' @param model statistical model to be evaluated.
 #' @param predictors vector of characters designating columns of interest. Non-specified independent variables will not be included.
 #'
 #' @return data.frame with coefficients and p-values for predictor variables
+#'
+#' @examples
+#' data <- survival::lung
+#' mod <- build_reg_model(data, 'age', 'sex')
+#' tbl <- table_predictors(data, mod, 'sex')
 #'
 #' @export
 #'
@@ -235,6 +244,15 @@ table_predictors <- function(df, model, predictors) {
 #' @param verbose logical. TRUE activates printout messages.
 #'
 #' @return named list of models
+#'
+#' @examples
+#' data <- survival::lung
+#' outcome <- 'time'
+#' predictor_sets <- list('age' = c('age'),'age_ecog' = c('age', 'ph.ecog'))
+#' covariates = c('sex')
+#' modality <- 'cox'
+#' event_censor <- 'status'
+#' bl_stats <- blanket_stats(data, outcome, predictor_sets, covariates, modality, event_censor)
 #'
 #' @export
 #'
@@ -297,6 +315,15 @@ blanket_stats <- function(df, outcome, predictor_sets, covariates=c(), modality 
 #'
 #' @return named list of named lists of models
 #'
+#' @examples
+#' data <- survival::lung
+#' models_to_run <- list('OS' = list(
+#' 'outcome' = 'time', 'modality' = 'cox', 'event_censor' = 'status'),
+#' 'weight_loss' = list('outcome' = 'wt.loss', 'modality' = 'linear', 'event_censor' = NA))
+#' predictor_sets <- list('age' = c('age'),'age_ecog' = c('age', 'ph.ecog'))
+#' covariates = c('sex')
+#' bl_stats <- blanket_statsments(data, models_to_run, predictor_sets, covariates)
+#'
 #' @export
 #'
 #' @author J. Peter Marquardt
@@ -351,6 +378,16 @@ blanket_statsments <- function(df, models_to_run, predictor_sets, covariates=c()
 #' @param blanket_statsment_models list of models produced by blanket_statsments()
 #'
 #' @return data.frame with tabled results
+#'
+#' @examples
+#' data <- survival::lung
+#' models_to_run <- list('OS' = list(
+#' 'outcome' = 'time', 'modality' = 'cox', 'event_censor' = 'status'),
+#' 'weight_loss' = list('outcome' = 'wt.loss', 'modality' = 'linear', 'event_censor' = NA))
+#' predictor_sets <- list('age' = c('age'),'age_ecog' = c('age', 'ph.ecog'))
+#' covariates = c('sex')
+#' bl_stats <- blanket_statsments(data, models_to_run, predictor_sets, covariates)
+#' tbl <- table_blanket_statsments(data, bl_stats)
 #'
 #' @seealso [blanket_statsments()] for models and [table_predictors()] for tabling results
 #'
@@ -420,27 +457,33 @@ table_blanket_statsments <- function(df, blanket_statsment_models){
 #' Perform a redundancy analysis on an existing model
 #'
 #' @param model a statistical regression model of class linear, logistic or coxph
+#' @param data data.frame used to create the model
 #' @param r2_threshold float threshold value to consider a parameter redundant
 #' @param nk number of knots in splicing
 #'
 #' @return an object of class "redun"
+#'
+#' @examples
+#' data <- survival::lung
+#' mod <- build_reg_model(data, 'age', c('sex'))
+#' redundancy_analysis(mod, data)
 #'
 #' @importFrom Hmisc redun
 #' @importFrom stats as.formula
 #' @export
 #'
 #' @author J. Peter Marquardt
-redundancy_analysis <- function(model, r2_threshold=0.9, nk=0){
+redundancy_analysis <- function(model, data, r2_threshold=0.9, nk=0){
   # seperate paths depending on model type
   if ('coxph' %in% class(model)){
     outcome <- as.character(model$formula[[2]][2])
     predictors <- paste(as.character(model$formula[[3]])[-1], collapse = ' + ')
     form <- stats::as.formula(paste(outcome, predictors, sep='~'))
-    return(Hmisc::redun(form, data = eval(model$call$data), r2=r2_threshold, nk=nk))
+    return(Hmisc::redun(form, data = data, r2=r2_threshold, nk=nk))
   }
 
   else if ('lm' %in% class(model) | 'glm' %in% class(model)){
-    return(Hmisc::redun(model$terms, data = eval(model$call$data), r2=r2_threshold, nk=nk))
+    return(Hmisc::redun(model$terms, data = data, r2=r2_threshold, nk=nk))
   }
 
   stop('The model needs to be a regression of type coxph, lm or glm.')
@@ -452,25 +495,36 @@ redundancy_analysis <- function(model, r2_threshold=0.9, nk=0){
 #' Perform a blanket redundancy analysis on a list of existing models
 #'
 #' @param model_list a list of statistical regression model of class linear, logistic or coxph
+#' @param data data.frame used to create the models
 #' @param r2_threshold float threshold value to consider a parameter redundant
 #' @param nk number of knots in splicing
 #' @param verbose ctivate printouts of key findings
 #'
 #' @return an list of objects of class "redun"
 #'
+#' @examples
+#' data <- survival::lung
+#' models_to_run <- list(
+#' 'OS' = list('outcome' = 'time', 'modality' = 'cox', 'event_censor' = 'status'),
+#' 'weight_loss' = list('outcome' = 'wt.loss', 'modality' = 'linear', 'event_censor' = NA))
+#' predictor_sets <- list('age' = c('age'), 'age_ecog' = c('age', 'ph.ecog'))
+#' covariates = c('sex')
+#' bl_stats <- blanket_statsments(data, models_to_run, predictor_sets, covariates)
+#' blanket_redundancy_analysis(bl_stats, data)
+#'
 #' @seealso [blanket_stats()]
 #'
 #' @export
 #'
 #' @author J. Peter Marquardt
-blanket_redundancy_analysis <- function(model_list, r2_threshold=0.9, nk=0, verbose=FALSE){
+blanket_redundancy_analysis <- function(model_list, data, r2_threshold=0.9, nk=0, verbose=FALSE){
 
   redundancy_list <- list()
   # loop over list of list of models to create an analogous list of lists of redun objects
   for (outcome in names(model_list)) {
     redundancy_list[[outcome]] <- list()
     for (predictors in names(model_list[[outcome]])){
-      redundancy_list[[outcome]][[predictors]] <- redundancy_analysis(model_list[[outcome]][[predictors]], r2_threshold=r2_threshold, nk=nk)
+      redundancy_list[[outcome]][[predictors]] <- redundancy_analysis(model_list[[outcome]][[predictors]], data=data, r2_threshold=r2_threshold, nk=nk)
     }
   }
 
@@ -486,6 +540,17 @@ blanket_redundancy_analysis <- function(model_list, r2_threshold=0.9, nk=0, verb
 #' @param digits integer number of decimals to include
 #'
 #' @return a data.frame tabling the key results
+#'
+#' @examples
+#' data <- survival::lung
+#' models_to_run <- list(
+#' 'OS' = list('outcome' = 'time', 'modality' = 'cox', 'event_censor' = 'status'),
+#' 'weight_loss' = list('outcome' = 'wt.loss', 'modality' = 'linear', 'event_censor' = NA))
+#' predictor_sets <- list('age' = c('age'), 'age_ecog' = c('age', 'ph.ecog'))
+#' covariates = c('sex')
+#' bl_stats <- blanket_statsments(data, models_to_run, predictor_sets, covariates)
+#' bl_redun <- blanket_redundancy_analysis(bl_stats, data)
+#' table_blanket_redundancies(bl_redun)
 #'
 #' @seealso [table_predictors()], [blanket_redundancy_analysis()]
 #'
@@ -506,4 +571,49 @@ table_blanket_redundancies <- function(blanket_redundancies, digits=2){
   }
 
   return(results_df)
+}
+
+
+#' Build formula for statistical models
+#'
+#' Build formula used in statistical models from vectors of strings. Copied from basecamb package to avoid dependency
+#'
+#' @param outcome character denoting the column with the outcome.
+#' @param predictors vector of characters denoting the columns with the
+#'   predictors.
+#' @param censor_event character denoting the column with the censoring event,
+#'   for use in Survival-type models.
+#'
+#' @return formula for use in statistical models
+#'
+#' @source \link[basecamb]{build_model_formula}
+#'
+#' @importFrom assertive.types assert_is_character
+#' @importFrom survival Surv
+#'
+#' @author J. Peter Marquardt
+.build_model_formula <- function(outcome, predictors, censor_event=NULL) {
+
+  assertive.types::assert_is_character(outcome)
+  assertive.types::assert_is_character(predictors)
+
+  if(is.null(censor_event)) {  # standard formula
+    frml <- as.formula(paste(outcome,
+                             ' ~ ',
+                             paste(predictors, collapse = ' + '),
+                             sep = ''))
+  }
+
+  else {  # Survival-type formula
+    assertive.types::assert_is_character(censor_event)
+    frml <- as.formula(paste('Surv(',
+                             outcome,
+                             ', ',
+                             censor_event,
+                             ')~',
+                             paste(predictors, collapse = ' + '),
+                             sep = ''))
+  }
+
+  return(frml)
 }

@@ -33,6 +33,11 @@ A Cox proportional hazards model
 \description{
 Build a Cox proportional hazards model from data and meta-parameters
 }
+\examples{
+data <- survival::lung
+mod <- build_cox_model(data, 'time', 'status', c('age', 'sex'))
+
+}
 \author{
 J. Peter Marquardt
 }

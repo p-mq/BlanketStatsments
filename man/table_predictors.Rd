@@ -19,6 +19,12 @@ data.frame with coefficients and p-values for predictor variables
 \description{
 Extract coefficients and p-values only for regression models and table them
 }
+\examples{
+data <- survival::lung
+mod <- build_reg_model(data, 'age', 'sex')
+tbl <- table_predictors(data, mod, 'sex')
+
+}
 \author{
 J. Peter Marquardt
 }

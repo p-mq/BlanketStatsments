@@ -29,6 +29,16 @@ named list of named lists of models
 \description{
 Wraps blanket_stats. Run a list of models with different modalities/outcomes for a list of different predictor sets with the same covariables.
 }
+\examples{
+data <- survival::lung
+models_to_run <- list('OS' = list(
+'outcome' = 'time', 'modality' = 'cox', 'event_censor' = 'status'),
+'weight_loss' = list('outcome' = 'wt.loss', 'modality' = 'linear', 'event_censor' = NA))
+predictor_sets <- list('age' = c('age'),'age_ecog' = c('age', 'ph.ecog'))
+covariates = c('sex')
+bl_stats <- blanket_statsments(data, models_to_run, predictor_sets, covariates)
+
+}
 \author{
 J. Peter Marquardt
 }

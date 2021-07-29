@@ -1,17 +1,20 @@
 Package: BlanketStatsments
 Title: Build and Compare Statistical Models
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: c(person(given = "J. Peter",
             family = "Marquardt",
             role = c("aut", "cre"),
             email = "peter@kmarquardt.de",
             comment = c(ORCID = "0000-0002-5596-1357")
             ))
-Description: Build and compare nested statistical models with sets of equal and different independent variables.
+Description: Build and compare nested statistical models with sets of equal and different independent variables. An analysis using this package is Marquardt et al. (2021) <https://github.com/p-mq/Percentile_based_averaging>.
 Depends: R (>= 4.0.0)
-Imports: basecamb, survival, survAUC, DescTools, Hmisc, stats, utils
+Imports: basecamb, survival, survAUC, DescTools, Hmisc, stats, utils, assertive.types
 License: GPL-3
 Encoding: UTF-8
 RoxygenNote: 7.1.1
 URL: https://github.com/p-mq/BlanketStatsments
 BugReports: https://github.com/p-mq/BlanketStatsments/issues
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

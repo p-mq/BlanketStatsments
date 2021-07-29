@@ -20,6 +20,12 @@ double AUC value for the evaluated model on the specified data set.
 Calculate Uno's concordance statistic for any model.
 CAVE: If you want to evaluate a model trained on a different dataset, df should be limited to the test set.
 }
+\examples{
+data <- survival::lung
+cancer_mod <- survival::coxph(survival::Surv(time, status)~age, data = data)
+calculate_Uno_c(data, cancer_mod)
+
+}
 \author{
 J. Peter Marquardt
 }

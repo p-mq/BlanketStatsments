@@ -35,6 +35,16 @@ named list of models
 \description{
 Run the same model (type, outcome, and covariates) with different sets of predictors
 }
+\examples{
+data <- survival::lung
+outcome <- 'time'
+predictor_sets <- list('age' = c('age'),'age_ecog' = c('age', 'ph.ecog'))
+covariates = c('sex')
+modality <- 'cox'
+event_censor <- 'status'
+bl_stats <- blanket_stats(data, outcome, predictor_sets, covariates, modality, event_censor)
+
+}
 \author{
 J. Peter Marquardt
 }
